@@ -9,6 +9,7 @@ import {
   Button,
   Paper,
   Typography,
+  CircularProgress,
   SelectChangeEvent,
 } from '@mui/material';
 
@@ -30,6 +31,7 @@ export const MedicalForm: React.FC = () => {
   });
   const [response, setResponse] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>(''); // برای ذخیره پیغام خطا
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent) => {
     const { name, value } = e.target;
@@ -41,7 +43,8 @@ export const MedicalForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true); // Start loading
+    setLoading(true); // شروع بارگذاری
+    setError(''); // پاک کردن خطای قبلی
 
     const { age, gender, weight, symptoms, medicalHistory } = formData;
     const url = "https://haji-api.ir/chatgpt-3.5/"; // URL برای API شما
@@ -71,7 +74,7 @@ export const MedicalForm: React.FC = () => {
         setResponse('مشکلی در دریافت پاسخ وجود دارد.');
       }
     } catch (error: any) {
-      setResponse(`خطا: ${error.message}`);
+      setError(`خطا: ${error.message}`);
     } finally {
       setLoading(false); // پایان بارگذاری
     }
@@ -154,13 +157,30 @@ export const MedicalForm: React.FC = () => {
         </Box>
       </Paper>
 
-      {response && (
+      {loading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+          <CircularProgress />
+        </Box>
+      )}
+
+      {response && !loading && !error && (
         <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
           <Typography variant="h6" gutterBottom>
             پاسخ هوش مصنوعی
           </Typography>
           <Typography>
             {response}
+          </Typography>
+        </Paper>
+      )}
+
+      {error && (
+        <Paper elevation={3} sx={{ p: 3, mt: 3, backgroundColor: '#f8d7da' }}>
+          <Typography variant="h6" gutterBottom color="error">
+            خطا
+          </Typography>
+          <Typography color="error">
+            {error}
           </Typography>
         </Paper>
       )}
