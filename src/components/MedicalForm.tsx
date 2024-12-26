@@ -29,6 +29,7 @@ export const MedicalForm: React.FC = () => {
     medicalHistory: '',
   });
   const [response, setResponse] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent) => {
     const { name, value } = e.target;
@@ -38,10 +39,42 @@ export const MedicalForm: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send the data to your LangChain backend
-    setResponse('Form submitted successfully! The AI is processing your information...');
+    setLoading(true); // Start loading
+
+    const { age, gender, weight, symptoms, medicalHistory } = formData;
+    const url = "https://haji-api.ir/chatgpt-3.5/"; // URL برای API شما
+    const params = {
+      license: "WQL6s028NXNKa49551196091391144dhac",
+      chatId: "ovfwmhie58zfqzhe38hc5kbrjvmzzilj",
+      text: `سن: ${age}، جنسیت: ${gender}، وزن: ${weight}، علائم: ${symptoms}، سابقه پزشکی: ${medicalHistory} (با توجه به اطلاعات یه نسخه خیلی ساده بده)`
+    };
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params), // ارسال اطلاعات به API
+      });
+
+      if (!response.ok) {
+        throw new Error('خطای API: اتصال برقرار نشد.');
+      }
+
+      const data = await response.json();
+      if (data.ok) {
+        setResponse(data.answer || 'جواب ندارم.');
+      } else {
+        setResponse('مشکلی در دریافت پاسخ وجود دارد.');
+      }
+    } catch (error: any) {
+      setResponse(`خطا: ${error.message}`);
+    } finally {
+      setLoading(false); // پایان بارگذاری
+    }
   };
 
   return (
@@ -67,7 +100,7 @@ export const MedicalForm: React.FC = () => {
             <Select
               name="gender"
               value={formData.gender}
-              label="Gender"
+              label="جنسیت"
               onChange={handleChange}
             >
               <MenuItem value="male">مرد</MenuItem>
@@ -114,8 +147,9 @@ export const MedicalForm: React.FC = () => {
             color="primary" 
             size="large"
             sx={{ mt: 2 }}
+            disabled={loading} // دکمه در حالت بارگذاری غیرفعال می‌شود
           >
-            ارسال کنید
+            {loading ? 'در حال پردازش...' : 'ارسال کنید'}
           </Button>
         </Box>
       </Paper>
